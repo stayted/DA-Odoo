@@ -2,13 +2,7 @@
 
 > This repository containes all Odoo Modules developed by Digital Automations
 
-## MPFE Modules
-
-| Module | Added |
-| --- | --- |
-| create-invoice | 14/06/21  |
-
-### create-invoice
+## MPFE-create-invoice
 
 > Copy fields from sale.order and purchase.order to account.move
 
@@ -19,6 +13,4 @@ This module copy:
 - `x_studio_da_n_pezzi` from `sale.order.line` -> `x_studio_da_n_pezzi` in `account.move.line`
 
 when an account\_invoice is generated.
-
-## Common Modules
 
