@@ -6,7 +6,7 @@
     'category': 'Custom Development',
     'author': 'Silvio Benvegnù @ Digital Automations',
     'description':
-        "Copy fields when an account invoice is created"",
+        "Copy fields when an account invoice is created",
     'data': [
         'views/account_move.xml',
     ],
