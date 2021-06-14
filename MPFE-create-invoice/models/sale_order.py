@@ -22,6 +22,6 @@ class SaleOrderLine(models.Model):
         res["x_studio_da_n_pezzi"]  = self.x_studio_da_n_pezzi
         res["x_studio_da_cartoni"]  = self.x_studio_da_cartoni
         res["x_studio_da_pallet"]   = self.x_studio_da_pallet
-        res["x_studio_da_supplier"] = self.x_studio_da_supplier
+        res["x_studio_supplier"] = self.x_studio_supplier
         return res
 
