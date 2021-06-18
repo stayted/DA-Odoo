@@ -29,7 +29,6 @@ when an account_invoice is generated.
 
 """,
     'data': [
-        'views/account_move.xml',
     ],
     'depends': ['account', 'sale', 'purchase'],
 }
