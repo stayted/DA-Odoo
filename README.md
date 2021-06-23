@@ -17,3 +17,14 @@ This module copy:
 
 when an account\_invoice is generated.
 
+## MPFE-create-order
+
+> Copy fields from res.partner to sale.order
+
+This module copy:
+
+- `res_patner['x_studio_incoterms_1.code']` to `sale_order.x_studio_incoterms`
+
+
+when a partner is selected.
+
