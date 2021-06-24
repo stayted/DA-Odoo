@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 {
-    'name' : 'MPFE - create invoice',
+    'name' : 'MPFE - create order',
     'version': '0.0.1',
     'summary': 'Module customization',
     'category': 'Custom Development',

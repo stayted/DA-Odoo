@@ -27,6 +27,14 @@ This module copy:
 
 when an account_invoice is generated.  
 
+Calculate Totals for:
+
+- Cartoni
+- Pallet
+- Pezzi
+
+Per le merci conteggiate ad unità esclude dal conteggio i servizi e divide il conteggio per le mdiverse unità di misura.
+
 """,
     'data': [
     ],

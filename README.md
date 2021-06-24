@@ -15,6 +15,15 @@ This module copy:
 - `x_studio_da_pallet` from `sale.order.line` -> `x_studio_da_pallet` in `account.move.line`
 - `x_studio_supplier` from `sale.order.line` -> `x_studio_supplier` in `account.move.linecamp`
 
+Calculate Totals for:
+
+- Cartoni
+- Pallet
+- Pezzi
+- Unità*
+
+(*Per le merci conteggiate ad unità esclude dal conteggio i servizi e divide il conteggio per le diverse unità di misura)
+
 when an account\_invoice is generated.
 
 ## MPFE-create-order
