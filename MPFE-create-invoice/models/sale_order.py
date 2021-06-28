@@ -36,10 +36,10 @@ class SaleOrder(models.Model):
                 'box'  : 0,
                 'unit' : 0,
             },
-            'test_string' : '', # test
+            # 'test_string' : '', # test
         };
         for line in lines:
-            tot['test_string'] += ' ' + line['x_studio_da_product'] # test
+            # tot['test_string'] += ' ' + line['x_studio_da_product'] # test
             tot['pezzi']   += line['x_studio_da_n_pezzi']
             tot['pallet']  += line['x_studio_da_pallet']
             tot['cartoni'] += line['x_studio_da_cartoni']
@@ -56,7 +56,7 @@ class SaleOrder(models.Model):
         res['kg']      = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['d_qta']['kg'] ) ) if tot['d_qta']['kg'] > 0 else None
         res['box']     = re.sub( '^(\d+)\.(\d+)$', r'\1', str( tot['d_qta']['box'] ) ) if tot['d_qta']['box'] > 0 else None
         res['unit']    = re.sub( '^(\d+)\.(\d+)$', r'\1', str( tot['d_qta']['unit'] ) ) if tot['d_qta']['unit'] > 0 else None
-        res['test_string'] = tot['test_string'] # test
+        # res['test_string'] = tot['test_string'] # test
 
         return res
 
@@ -125,7 +125,7 @@ class SaleOrder(models.Model):
             invoice_vals['x_studio_da_tot_kg']        = tots['kg']
             invoice_vals['x_studio_da_tot_unit']      = tots['unit']
             invoice_vals['x_studio_da_tot_box']       = tots['box']
-            invoice_vals['narration'] += tots['test_string'] # test
+            # invoice_vals['narration'] += tots['test_string'] # test
             invoice_vals_list.append(invoice_vals)
 
         if not invoice_vals_list:
