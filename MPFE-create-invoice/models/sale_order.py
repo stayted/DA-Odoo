@@ -36,8 +36,10 @@ class SaleOrder(models.Model):
                 'box'  : 0,
                 'unit' : 0,
             },
+            'test_string' : '', # test
         };
         for line in lines:
+            tot['test_string'] += ' ' + line['x_studio_da_product'] # test
             tot['pezzi']   += line['x_studio_da_n_pezzi']
             tot['pallet']  += line['x_studio_da_pallet']
             tot['cartoni'] += line['x_studio_da_cartoni']
@@ -52,8 +54,9 @@ class SaleOrder(models.Model):
         res['cartoni'] = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['cartoni'] ) ) if tot['cartoni'] > 0 else None
         res['pallet']  = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['pallet'] ) ) if tot['pallet'] > 0 else None
         res['kg']      = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['d_qta']['kg'] ) ) if tot['d_qta']['kg'] > 0 else None
-        res['box']     = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['d_qta']['box'] ) ) if tot['d_qta']['box'] > 0 else None
-        res['unit']    = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['d_qta']['unit'] ) ) if tot['d_qta']['unit'] > 0 else None
+        res['box']     = re.sub( '^(\d+)\.(\d+)$', r'\1', str( tot['d_qta']['box'] ) ) if tot['d_qta']['box'] > 0 else None
+        res['unit']    = re.sub( '^(\d+)\.(\d+)$', r'\1', str( tot['d_qta']['unit'] ) ) if tot['d_qta']['unit'] > 0 else None
+        res['test_string'] = tot['test_string'] # test
 
         return res
 
@@ -122,6 +125,7 @@ class SaleOrder(models.Model):
             invoice_vals['x_studio_da_tot_kg']        = tots['kg']
             invoice_vals['x_studio_da_tot_unit']      = tots['unit']
             invoice_vals['x_studio_da_tot_box']       = tots['box']
+            invoice_vals['narration'] += tots['test_string'] # test
             invoice_vals_list.append(invoice_vals)
 
         if not invoice_vals_list:
@@ -241,7 +245,7 @@ class SaleOrderLine(models.Model):
             'analytic_account_id': self.order_id.analytic_account_id.id,
             'analytic_tag_ids': [(6, 0, self.analytic_tag_ids.ids)],
             'sale_line_ids': [(4, self.id)],
-            'x_studio_da_product': self.product_id.name,
+            'x_studio_da_product': self.product_id.product_tmpl_id.categ_id.name,
             'x_studio_da_uom_1': self.product_uom.name,
         }
         if optional_values:
