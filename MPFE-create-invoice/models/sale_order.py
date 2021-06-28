@@ -23,38 +23,39 @@ class SaleOrder(models.Model):
         res["x_studio_metodo_di_pagamento_per_questa_fattura"] = self.x_studio_metodo_di_pagamento_per_questo_ordine
         return res
 
-    def _get_tot_pezzi( self, lines ):
+    def _get_totals( self, lines ):
+        unit_translations = { 'kg': 'kg', 'Box': 'box', 'Unità': 'unit' }
+        res = {}
         tot = {
             'pezzi'   : 0,
             'cartoni' : 0,
-            'qta'     : 0,
-            'd_qta'   : {},
             'pallet'  : 0,
-            'string'  : '',
+            'qta'     : 0,
+            'd_qta'   : {
+                'kg'   : 0,
+                'box'  : 0,
+                'unit' : 0,
+            },
         };
         for line in lines:
-            tot['pezzi']   += line[2]['x_studio_da_n_pezzi']
-            tot['pallet']  += line[2]['x_studio_da_pallet']
-            tot['cartoni'] += line[2]['x_studio_da_cartoni']
-            if ( line[2]['product_uom_id'] == 1 and re.search( 'serviz', line[2]['x_studio_da_product'], re.IGNORECASE ) != None ) == False:
+            tot['pezzi']   += line['x_studio_da_n_pezzi']
+            tot['pallet']  += line['x_studio_da_pallet']
+            tot['cartoni'] += line['x_studio_da_cartoni']
+            if ( line['product_uom_id'] == 1 and re.search( 'serviz', line['x_studio_da_product'], re.IGNORECASE ) != None ) == False:
                 tot['qta'] += 1
-                if line[2]['x_studio_da_uom_1'] in tot['d_qta'].keys():
-                    tot['d_qta'][ line[2]['x_studio_da_uom_1'] ] += line[2]['quantity']
+                unit = unit_translations[ line['x_studio_da_uom_1'] ] if line['x_studio_da_uom_1'] in unit_translations.keys() else line['x_studio_da_uom_1']
+                if unit in tot['d_qta'].keys():
+                    tot['d_qta'][ unit ] += line['quantity']
                 else:
-                    tot['d_qta'][ line[2]['x_studio_da_uom_1'] ] = line[2]['quantity']
-        if tot['pezzi'] > 0 or tot['cartoni'] > 0 or tot['qta'] > 0 or tot['pallet'] > 0:
-            tot['string'] += '\n'
-            if tot['pezzi'] > 0:
-                tot['string'] += '\nPezzi: ' + re.sub( '^(\d+)\.(\d+)$', r'\\1,\\2', str( tot['pezzi'] ) )
-            if tot['cartoni'] > 0:
-                tot['string'] += '\nCartoni: ' + str( tot['cartoni'] )
-            if tot['pallet'] > 0:
-                tot['string'] += '\nPallet: ' + str( tot['pallet'] )
-            if tot['qta'] > 0:
-                tot['string'] += '\nQuantità:'
-                for uom in tot['d_qta']:
-                    tot['string'] += '\n  - ' + re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['d_qta'][ uom ] ) ) + ' ' + uom
-        return tot
+                    tot['d_qta'][ unit ] = line['quantity']
+        res['pezzi']   = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['pezzi'] ) ) if tot['pezzi'] > 0 else None
+        res['cartoni'] = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['cartoni'] ) ) if tot['cartoni'] > 0 else None
+        res['pallet']  = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['pallet'] ) ) if tot['pallet'] > 0 else None
+        res['kg']      = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['d_qta']['kg'] ) ) if tot['d_qta']['kg'] > 0 else None
+        res['box']     = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['d_qta']['box'] ) ) if tot['d_qta']['box'] > 0 else None
+        res['unit']    = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['d_qta']['unit'] ) ) if tot['d_qta']['unit'] > 0 else None
+
+        return res
 
     def _create_invoices(self, grouped=False, final=False, date=None):
         """
@@ -87,6 +88,7 @@ class SaleOrder(models.Model):
 
             invoice_line_vals = []
             down_payment_section_added = False
+            sums_data = []
             for line in invoiceable_lines:
                 if not down_payment_section_added and line.is_downpayment:
                     # Create a dedicated section for the down payments
@@ -98,16 +100,28 @@ class SaleOrder(models.Model):
                     )
                     dp_section = True
                     invoice_item_sequence += 1
+                invoice_line = line._prepare_invoice_line( sequence=invoice_item_sequence, )
+                sums_data.append( invoice_line.copy() )
+                invoice_line.pop('x_studio_da_product', None)
+                invoice_line.pop('x_studio_da_uom_1', None)
                 invoice_line_vals.append(
-                    (0, 0, line._prepare_invoice_line(
-                        sequence=invoice_item_sequence,
-                    )),
+                    (0, 0, invoice_line),
                 )
+#               invoice_line_vals.append(
+#                   (0, 0, line._prepare_invoice_line(
+#                       sequence=invoice_item_sequence,
+#                   )),
+#               )
                 invoice_item_sequence += 1
 
             invoice_vals['invoice_line_ids'] += invoice_line_vals
-            tots = self._get_tot_pezzi( invoice_line_vals )
-            invoice_vals['narration'] += tots['string']
+            tots = self._get_totals( sums_data )
+            invoice_vals['x_studio_da_tot_pallet']    = tots['pallet']
+            invoice_vals['x_studio_da_tot_cartoni_2'] = tots['cartoni']
+            invoice_vals['x_studio_da_tot_pezzi_2']   = tots['pezzi']
+            invoice_vals['x_studio_da_tot_kg']        = tots['kg']
+            invoice_vals['x_studio_da_tot_unit']      = tots['unit']
+            invoice_vals['x_studio_da_tot_box']       = tots['box']
             invoice_vals_list.append(invoice_vals)
 
         if not invoice_vals_list:
@@ -184,6 +198,33 @@ class SaleOrder(models.Model):
 
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
+
+    @api.model
+    def _prepare_down_payment_section_line(self, **optional_values):
+        """
+        Prepare the dict of values to create a new down payment section for a sales order line.
+
+        :param optional_values: any parameter that should be added to the returned down payment section
+        """
+        down_payments_section_line = {
+            'display_type': 'line_section',
+            'name': _('Down Payments'),
+            'product_id': False,
+            'product_uom_id': False,
+            'quantity': 0,
+            'discount': 0,
+            'price_unit': 0,
+            'account_id': False,
+            'x_studio_da_product': self.product_id.name,
+            'x_studio_da_uom_1': self.product_uom.name,
+        }
+        if optional_values:
+            down_payments_section_line.update(optional_values)
+        down_payments_section_line["x_studio_da_n_pezzi"]  = 0
+        down_payments_section_line["x_studio_da_cartoni"]  = 0
+        down_payments_section_line["x_studio_da_pallet"]   = 0
+        down_payments_section_line["x_studio_supplier"]    = 0
+        return down_payments_section_line
 
     def _prepare_invoice_line(self, **optional_values):
         self.ensure_one()
