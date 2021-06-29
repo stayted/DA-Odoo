@@ -110,11 +110,6 @@ class SaleOrder(models.Model):
                 invoice_line_vals.append(
                     (0, 0, invoice_line),
                 )
-#               invoice_line_vals.append(
-#                   (0, 0, line._prepare_invoice_line(
-#                       sequence=invoice_item_sequence,
-#                   )),
-#               )
                 invoice_item_sequence += 1
 
             invoice_vals['invoice_line_ids'] += invoice_line_vals

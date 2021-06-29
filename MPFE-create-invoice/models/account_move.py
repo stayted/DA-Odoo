@@ -33,6 +33,45 @@ def calc_check_digits(number):
 class AccountMove(models.Model):
     _inherit = "account.move"
 
+    def _get_totals( self, lines ):
+        unit_translations = { 'kg': 'kg', 'Box': 'box', 'Unità': 'unit' }
+        res = {}
+        tot = {
+            'pezzi'   : 0,
+            'cartoni' : 0,
+            'pallet'  : 0,
+            'qta'     : 0,
+            'd_qta'   : {
+                'kg'   : 0,
+                'box'  : 0,
+                'unit' : 0,
+            },
+            # 'test_string' : '', # test
+        };
+        for line in lines:
+            category_name = line.product_id.product_tmpl_id.categ_id.name
+            if category_name == False:
+                continue
+            tot['pezzi']   += line['x_studio_da_n_pezzi']
+            tot['pallet']  += line['x_studio_da_pallet']
+            tot['cartoni'] += line['x_studio_da_cartoni']
+            # tot['test_string'] += ' ' + str( category_name ) # test
+            if ( line.product_uom_id == 1 and re.search( 'serviz', category_name, re.IGNORECASE ) != None ) == False:
+                tot['qta'] += 1
+                unit = unit_translations[ line.product_uom_id.name ] if line.product_uom_id.name in unit_translations.keys() else line.product_uom_id.name
+                if unit in tot['d_qta'].keys():
+                    tot['d_qta'][ unit ] += line['quantity']
+                else:
+                    tot['d_qta'][ unit ] = line['quantity']
+        res['pezzi']   = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['pezzi'] ) ) if tot['pezzi'] > 0 else None
+        res['cartoni'] = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['cartoni'] ) ) if tot['cartoni'] > 0 else None
+        res['pallet']  = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['pallet'] ) ) if tot['pallet'] > 0 else None
+        res['kg']      = re.sub( '^(\d+)\.(\d+)$', r'\1,\2', str( tot['d_qta']['kg'] ) ) if tot['d_qta']['kg'] > 0 else None
+        res['box']     = re.sub( '^(\d+)\.(\d+)$', r'\1', str( tot['d_qta']['box'] ) ) if tot['d_qta']['box'] > 0 else None
+        res['unit']    = re.sub( '^(\d+)\.(\d+)$', r'\1', str( tot['d_qta']['unit'] ) ) if tot['d_qta']['unit'] > 0 else None
+        # res['test_string'] = tot['test_string'] # test
+        return res
+
     @api.depends(
         'line_ids.matched_debit_ids.debit_move_id.move_id.payment_id.is_matched',
         'line_ids.matched_debit_ids.debit_move_id.move_id.line_ids.amount_residual',
@@ -70,7 +109,9 @@ class AccountMove(models.Model):
             total_currency = 0.0
             currencies = move._get_lines_onchange_currency().currency_id
 
+            sums_data = [] # custom
             for line in move.line_ids:
+                sums_data.append( line ) # custom
                 if move.is_invoice(include_receipts=True):
                     # === Invoices ===
 
@@ -109,6 +150,14 @@ class AccountMove(models.Model):
             move.amount_tax_signed = -total_tax
             move.amount_total_signed = abs(total) if move.move_type == 'entry' else -total
             move.amount_residual_signed = total_residual
+            tots = self._get_totals( sums_data ) # custom
+            move['x_studio_da_tot_pallet']    = tots['pallet']
+            move['x_studio_da_tot_cartoni_2'] = tots['cartoni']
+            move['x_studio_da_tot_pezzi_2']   = tots['pezzi']
+            move['x_studio_da_tot_kg']        = tots['kg']
+            move['x_studio_da_tot_unit']      = tots['unit']
+            move['x_studio_da_tot_box']       = tots['box']
+            # move['narration'] += tots['test_string'] # test
 
             currency = len(currencies) == 1 and currencies or move.company_id.currency_id
 
