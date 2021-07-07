@@ -222,7 +222,7 @@ class SaleOrderLine(models.Model):
         down_payments_section_line["x_studio_da_n_pezzi"]  = 0
         down_payments_section_line["x_studio_da_cartoni"]  = 0
         down_payments_section_line["x_studio_da_pallet"]   = 0
-        down_payments_section_line["x_studio_supplier"]    = 0
+        #down_payments_section_line["x_studio_supplier"]    = 0
         return down_payments_section_line
 
     def _prepare_invoice_line(self, **optional_values):
